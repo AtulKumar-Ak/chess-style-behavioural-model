@@ -1,0 +1,5 @@
+player,n_total,n_clean,n_outliers,mean_eval_all,mean_eval_clean,median_eval_clean,std_eval_clean,mean_vol_all,mean_vol_clean,median_vol_clean,std_vol_clean
+MagnusCarlsen,80,63,17,79.57,67.49,78.45,153.43,334.9,231.64,235.77,59.51
+Hikaru,80,64,16,63.71,40.34,27.23,181.56,375.75,240.51,234.62,66.23
+alireza2003,80,56,24,108.39,53.25,44.36,178.16,474.8,243.26,241.45,44.7
+lachesisQ,80,61,19,56.59,66.02,52.92,152.65,302.64,245.96,251.6,68.48
