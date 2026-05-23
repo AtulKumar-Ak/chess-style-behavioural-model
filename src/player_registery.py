@@ -1,3 +1,4 @@
+#src/player_registery.py
 PLAYER_REGISTRY = {
 
     "magnus": {
@@ -10,6 +11,10 @@ PLAYER_REGISTRY = {
 
             "chesscom": [
                 "magnuscarlsen"
+            ],
+
+            "pgnmentor":[
+                "Carlsen,Magnus"
             ]
         }
     },
@@ -24,6 +29,10 @@ PLAYER_REGISTRY = {
 
             "chesscom": [
                 "hikaru"
+            ],
+
+            "pgnmentor":[
+                "Nakamura,Hikaru"
             ]
         }
     },
@@ -38,6 +47,10 @@ PLAYER_REGISTRY = {
 
             "chesscom": [
                 "firouzja2003"
+            ],
+
+            "pgnmentor":[
+                "Firouzja,Alireza"
             ]
         }
     },
@@ -52,6 +65,10 @@ PLAYER_REGISTRY = {
 
             "chesscom": [
                 "lachesisq"
+            ],
+
+            "pgnmentor":[
+                "Nepomniachtchi,I"
             ]
         }
     }

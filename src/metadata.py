@@ -1,3 +1,4 @@
+#src/metadata.py
 def safe_int(x):
 
     try:
@@ -68,6 +69,22 @@ def normalize_variant(headers, platform):
             return "Standard"
 
         return headers["Variant"]
+    
+    # ==========================================
+    # PGN MENTOR
+    # ==========================================
+
+    elif platform == "pgnmentor":
+
+        # --------------------------------------
+        # Missing Variant => Standard
+        # --------------------------------------
+
+        if "Variant" not in headers:
+            return "Standard"
+
+        return headers["Variant"]
+    
 
     return "Unknown"
 
@@ -76,7 +93,18 @@ def extract_metadata(game, platform):
 
     h = game.headers
 
-    tc = h.get("TimeControl", "")
+    if platform == "pgnmentor":
+
+        tc = h.get("TimeControl", "5400")
+        if not tc or tc == "?":
+            tc = "5400"
+
+    else:
+
+        tc = h.get(
+            "TimeControl",
+            ""
+        )
 
     moves = list(game.mainline_moves())
     # ======================================

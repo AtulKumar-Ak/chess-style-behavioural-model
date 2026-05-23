@@ -1,3 +1,4 @@
+#scripts/sample_gpt.py
 import json
 
 import chess

@@ -22,7 +22,6 @@ kept_games = 0
 # ======================================================
 
 for jsonl_file in INPUT_DIR.glob("*.jsonl"):
-
     print("\n" + "=" * 60)
     print("PROCESSING:", jsonl_file.name)
     print("=" * 60)

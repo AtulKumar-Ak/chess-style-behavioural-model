@@ -1,3 +1,4 @@
+#filters/common.py
 MIN_MOVES = 20
 MAX_MOVES = 350
 def common_filters(metadata):
@@ -51,12 +52,9 @@ def common_filters(metadata):
     # ABORTED
     # ======================================
 
-    termination = (
-        metadata["termination"]
-        .lower()
-    )
-
-    if "aborted" in termination:
+    termination = metadata["termination"].lower()
+ 
+    if termination and "aborted" in termination:
         return False
-
+ 
     return True

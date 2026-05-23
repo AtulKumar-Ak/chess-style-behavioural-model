@@ -3,109 +3,116 @@ import json
 from collections import Counter
 
 # ======================================================
-
-TRAJ_DIR = Path(
-    "dataset/trajectories/train"
-)
-
-OUTPUT_DIR = Path(
-    "dataset/vocab"
-)
-
-OUTPUT_DIR.mkdir(
-    parents=True,
-    exist_ok=True
-)
-
+# PATHS
 # ======================================================
 
-token_counter = Counter()
+TRAJ_DIR   = Path("dataset/trajectories/train")
+OUTPUT_DIR = Path("dataset/vocab")
 
+OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+
+# ======================================================
+# COUNTERS / SETS
+# ======================================================
+
+move_counter = Counter()
+players      = set()
+speeds       = set()
+
+# ======================================================
+# PROCESS FILES
 # ======================================================
 
 for jsonl_file in TRAJ_DIR.glob("*.jsonl"):
 
-    print("\nPROCESSING:", jsonl_file.name)
+    # Skip pgnmentor — excluded from pipeline
+    if "pgnmentor" in jsonl_file.name.lower():
+        print(f"SKIP (pgnmentor excluded): {jsonl_file.name}")
+        continue
 
-    with open(
-        jsonl_file,
-        encoding="utf-8"
-    ) as f:
+    print("\n" + "=" * 60)
+    print("PROCESSING:", jsonl_file.name)
+    print("=" * 60)
 
+    with open(jsonl_file, encoding="utf-8") as f:
         for line in f:
-
             record = json.loads(line)
 
-            # ==========================================
-            # CONTEXT TOKENS
-            # ==========================================
+            for token in record["moves"]:
+                move_counter[token] += 1
 
-            for token in record["context"]:
+            # "opponent" will be picked up here automatically
+            players.add(record["player"])
 
-                token_counter[token] += 1
-
-            # ==========================================
-            # TARGET TOKENS
-            # ==========================================
-
-            for token in record["target"]:
-
-                token_counter[token] += 1
+            speeds.add(record["speed"])
 
 # ======================================================
-# SPECIAL TOKENS
+# BUILD MOVE VOCAB
 # ======================================================
 
-vocab = {
+move_vocab = {"<PAD>": 0, "<UNK>": 1}
 
-    "<PAD>": 0,
-    "<UNK>": 1
-}
-
-# ======================================================
-# SORT BY FREQUENCY
-# ======================================================
-
-sorted_tokens = sorted(
-
-    token_counter.items(),
-
-    key=lambda x: x[1],
-
-    reverse=True
-)
+for token, _ in sorted(
+    move_counter.items(), key=lambda x: x[1], reverse=True
+):
+    move_vocab[token] = len(move_vocab)
 
 # ======================================================
-# BUILD VOCAB
+# BUILD PLAYER VOCAB
 # ======================================================
 
-for token, count in sorted_tokens:
+player_vocab = {"<UNK_PLAYER>": 0}
 
-    vocab[token] = len(vocab)
+for player in sorted(players):
+    player_vocab[player] = len(player_vocab)
 
 # ======================================================
+# BUILD SPEED VOCAB
+# ======================================================
 
-print("\nVOCAB SIZE:", len(vocab))
+speed_vocab = {"<UNK_SPEED>": 0}
+
+for speed in sorted(speeds):
+    speed_vocab[speed] = len(speed_vocab)
+
+# ======================================================
+# PRINT RESULTS
+# ======================================================
+
+print("\n" + "=" * 60)
+print("VOCAB SUMMARY")
+print("=" * 60)
+print(f"\nMOVE VOCAB SIZE   : {len(move_vocab)}")
+print(f"PLAYER VOCAB SIZE : {len(player_vocab)}")
+print(f"SPEED VOCAB SIZE  : {len(speed_vocab)}")
+
+print("\nPLAYERS:")
+for player in sorted(players):
+    print(f"  {player}")
+
+print("\nSPEEDS:")
+for speed in sorted(speeds):
+    print(f"  {speed}")
+
+# Sanity check — opponent must be present
+if "opponent" not in player_vocab:
+    print("\nWARNING: 'opponent' not found in player vocab.")
+    print("Check that build_trajectories.py ran correctly.")
+else:
+    print(f"\nOpponent label OK — id: {player_vocab['opponent']}")
 
 # ======================================================
 # SAVE
 # ======================================================
 
-output_path = (
-    OUTPUT_DIR /
-    "move_vocab.json"
-)
+with open(OUTPUT_DIR / "move_vocab.json", "w", encoding="utf-8") as f:
+    json.dump(move_vocab, f, indent=2)
 
-with open(
-    output_path,
-    "w",
-    encoding="utf-8"
-) as f:
+with open(OUTPUT_DIR / "player_vocab.json", "w", encoding="utf-8") as f:
+    json.dump(player_vocab, f, indent=2)
 
-    json.dump(
-        vocab,
-        f,
-        indent=2
-    )
+with open(OUTPUT_DIR / "speed_vocab.json", "w", encoding="utf-8") as f:
+    json.dump(speed_vocab, f, indent=2)
 
-print("\nSAVED:", output_path)
+print(f"\nSAVED TO: {OUTPUT_DIR}")
+print("\nDONE.")

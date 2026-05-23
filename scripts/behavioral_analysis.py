@@ -63,15 +63,15 @@ num_players = len(player_vocab)
 
 model = GPTBehaviorModel(
     vocab_size=vocab_size,
-    max_seq_len=127,
-    embed_dim=256,
-    num_heads=4,
-    num_layers=4,
+    max_seq_len=63,
+    embed_dim=384,
+    num_heads=6,
+    num_layers=6,
     dropout=0.1,
     num_players=num_players
 )
 
-checkpoint_path = "checkpoints/gpt_latest.pt"
+checkpoint_path = "checkpoints/gpt_best.pt"
 
 model.load_state_dict(
     torch.load(checkpoint_path, map_location=device)

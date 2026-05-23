@@ -1,3 +1,4 @@
+#scripts/filter_datasets.py
 from pathlib import Path
 import json
 
@@ -13,6 +14,10 @@ from src.filters.lichess_filter import (
 
 from src.filters.chesscom_filter import (
     chesscom_filter
+)
+
+from src.filters.pgnmentor_filter import (
+    pgnmentor_filter
 )
 
 # =====================================================
@@ -43,6 +48,10 @@ for pgn_file in RAW_DIR.rglob("*.pgn"):
     elif "chesscom" in str(pgn_file).lower():
 
         platform = "chesscom"
+
+    elif "pgnmentor" in str(pgn_file).lower():
+
+        platform = "pgnmentor"
 
     else:
 
@@ -86,9 +95,15 @@ for pgn_file in RAW_DIR.rglob("*.pgn"):
                     metadata
                 )
 
-            else:
-
+            elif platform == "chesscom":
+            
                 keep = chesscom_filter(
+                    metadata
+                )
+
+            else:
+            
+                keep = pgnmentor_filter(
                     metadata
                 )
 
