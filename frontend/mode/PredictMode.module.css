@@ -1,0 +1,34 @@
+/* frontend/mode/PredictMode.module.css */
+
+.layout {
+  display: grid;
+  grid-template-columns: 492px 1fr;
+  gap: 28px;
+  align-items: start;
+  padding-top: 28px;
+}
+
+.boardCol {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sideCol {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  position: sticky;
+  top: 88px;
+}
+
+.errorBanner {
+  background: rgba(248,113,113,0.1);
+  border: 1px solid rgba(248,113,113,0.3);
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: #f87171;
+  animation: fade-in 0.2s ease;
+}

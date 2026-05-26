@@ -1,0 +1,218 @@
+/* frontend/highlights/PredictionPanel.module.css */
+
+.panel {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 18px 12px;
+}
+
+.playerInfo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.flag { font-size: 1.4rem; line-height: 1; }
+
+.playerName {
+  font-family: var(--serif);
+  font-size: 1.05rem;
+  font-weight: 700;
+  font-style: italic;
+  line-height: 1.1;
+}
+
+.playerStyle {
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  color: var(--muted);
+  margin-top: 3px;
+  letter-spacing: 0.04em;
+}
+
+/* Loading */
+.loadingDots {
+  display: flex;
+  gap: 4px;
+}
+
+.loadingDots span {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--gold);
+  animation: dot-bounce 1s ease-in-out infinite;
+}
+
+.loadingDots span:nth-child(2) { animation-delay: 0.17s; }
+.loadingDots span:nth-child(3) { animation-delay: 0.34s; }
+
+/* Divider */
+.divider {
+  height: 2px;
+  opacity: 0.5;
+}
+
+/* Body */
+.body {
+  padding: 14px;
+  flex: 1;
+}
+
+.loadingMsg {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--muted);
+  text-align: center;
+  padding: 20px 0;
+  font-style: italic;
+}
+
+/* Move list */
+.moveList {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+/* Move Card */
+.card {
+  display: grid;
+  grid-template-columns: 28px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  background: none;
+  text-align: left;
+  width: 100%;
+  transition: all 0.14s;
+  position: relative;
+  overflow: hidden;
+  color: var(--text);
+  font-family: var(--sans);
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: var(--line2);
+  opacity: 0;
+  transition: opacity 0.14s;
+}
+
+.card:hover {
+  background: var(--card2);
+  border-color: var(--line);
+}
+
+.card:hover::before { opacity: 1; }
+
+.cardTop {
+  background: rgba(212,168,83,0.06);
+  border-color: rgba(212,168,83,0.2);
+}
+
+.cardTop::before {
+  background: var(--player-color, var(--gold));
+  opacity: 1;
+}
+
+.cardRank {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  color: var(--muted);
+  text-align: center;
+  font-weight: 700;
+}
+
+.cardInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cardMove {
+  font-family: var(--mono);
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.cardDesc {
+  font-size: 0.64rem;
+  color: var(--muted);
+  font-family: var(--mono);
+}
+
+.cardProb {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.cardPct {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.barWrap {
+  width: 64px;
+  height: 4px;
+  background: var(--card2);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.bar {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.4s cubic-bezier(0.4,0,0.2,1);
+}
+
+/* Notices */
+.notice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 24px 16px;
+  text-align: center;
+}
+
+.noticeIcon {
+  font-size: 1.8rem;
+  opacity: 0.3;
+}
+
+.noticeTitle {
+  font-family: var(--serif);
+  font-size: 0.95rem;
+  font-style: italic;
+  color: var(--muted);
+}
+
+.noticeBody {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  color: var(--muted2);
+  white-space: pre-line;
+  line-height: 1.7;
+}

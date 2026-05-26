@@ -1,0 +1,201 @@
+/* frontend/mode/CompareMode.module.css */
+
+.layout {
+  display: grid;
+  grid-template-columns: 492px 1fr;
+  gap: 28px;
+  align-items: start;
+  padding-top: 28px;
+}
+
+.boardCol {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sideCol {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  position: sticky;
+  top: 88px;
+  max-height: calc(100vh - 110px);
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.errorBanner {
+  background: rgba(248,113,113,0.1);
+  border: 1px solid rgba(248,113,113,0.3);
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: #f87171;
+}
+
+/* Compare Button */
+.cmpBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--gold);
+  background: var(--gold);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.14s;
+  letter-spacing: 0.02em;
+}
+
+.cmpBtn:hover:not(:disabled) { opacity: 0.85; }
+.cmpBtn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* Spin dots inside button */
+.spinDots { display: flex; gap: 3px; align-items: center; }
+.spinDots span {
+  width: 4px; height: 4px; border-radius: 50%;
+  background: var(--ink);
+  animation: dot-bounce 1s ease-in-out infinite;
+}
+.spinDots span:nth-child(2) { animation-delay: 0.17s; }
+.spinDots span:nth-child(3) { animation-delay: 0.34s; }
+
+/* Notices */
+.notice {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 28px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+}
+
+.noticeIcon {
+  font-size: 1.8rem;
+  opacity: 0.3;
+}
+
+.noticeText {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  color: var(--muted);
+  white-space: pre-line;
+  line-height: 1.7;
+  text-align: center;
+}
+
+/* Results */
+.results {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  animation: fade-in 0.25s ease;
+}
+
+.agreement {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: rgba(212,168,83,0.08);
+  border: 1px solid rgba(212,168,83,0.2);
+  border-radius: 8px;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--gold2);
+}
+
+.agreementIcon { opacity: 0.7; }
+
+/* Player Block */
+.playerBlock {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.pbHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px 8px;
+  border-bottom: 1px solid var(--line);
+}
+
+.pbDot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.pbFlag { font-size: 1rem; line-height: 1; }
+
+.pbName {
+  font-family: var(--serif);
+  font-size: 0.9rem;
+  font-style: italic;
+  font-weight: 700;
+}
+
+/* Move rows */
+.moveRows {
+  padding: 8px 12px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.moveRow {
+  display: grid;
+  grid-template-columns: 44px 1fr 38px 52px;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+}
+
+.topRow .mrUci { color: var(--gold2); }
+
+.mrUci {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.mrBarWrap {
+  height: 5px;
+  background: var(--card2);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.mrBar {
+  height: 100%;
+  border-radius: 3px;
+  animation: bar-grow 0.5s ease both;
+}
+
+.mrPct {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  color: var(--muted);
+  text-align: right;
+}
+
+.mrPiece {
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  color: var(--muted2);
+  text-align: right;
+}

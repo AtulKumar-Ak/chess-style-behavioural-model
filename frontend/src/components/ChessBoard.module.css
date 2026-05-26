@@ -1,0 +1,6 @@
+/* frontend/src/components/ChessBoard.module.css */
+
+.wrap {
+  position: relative;
+  flex-shrink: 0;
+}
