@@ -4,14 +4,12 @@ from src.dataset import (
     ChessBehaviorDataset
 )
 
-# ======================================================
 
 dataset = ChessBehaviorDataset(
 
     "dataset/hdf5/train.h5"
 )
 
-# ======================================================
 
 loader = DataLoader(
 
@@ -22,40 +20,33 @@ loader = DataLoader(
     shuffle=True
 )
 
-# ======================================================
 
 batch = next(iter(loader))
 
-# ======================================================
 
 print("\nCONTEXT")
 
 print(batch["context"].shape)
 
-# ------------------------------------------------------
 
 print("\nTARGET")
 
 print(batch["target"].shape)
 
-# ------------------------------------------------------
 
 print("\nPLAYER")
 
 print(batch["player"].shape)
 
-# ------------------------------------------------------
 
 print("\nSPEED")
 
 print(batch["speed"].shape)
 
-# ------------------------------------------------------
 
 print("\nELO")
 
 print(batch["elo"].shape)
 
-# ======================================================
 
 dataset.close()

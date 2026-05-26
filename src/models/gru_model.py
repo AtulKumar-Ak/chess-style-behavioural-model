@@ -19,9 +19,6 @@ class GRUBehaviorModel(nn.Module):
 
         super().__init__()
 
-        # ======================================
-        # MOVE EMBEDDINGS
-        # ======================================
 
         self.embedding = nn.Embedding(
 
@@ -30,9 +27,6 @@ class GRUBehaviorModel(nn.Module):
             embedding_dim=embed_dim
         )
 
-        # ======================================
-        # GRU
-        # ======================================
 
         self.gru = nn.GRU(
 
@@ -45,9 +39,6 @@ class GRUBehaviorModel(nn.Module):
             batch_first=True
         )
 
-        # ======================================
-        # OUTPUT HEAD
-        # ======================================
 
         self.output = nn.Linear(
 
@@ -56,32 +47,17 @@ class GRUBehaviorModel(nn.Module):
             vocab_size
         )
 
-    # ==========================================
 
     def forward(self, x):
 
-        # --------------------------------------
-        # x:
-        # [batch, seq]
-        # --------------------------------------
 
         x = self.embedding(x)
 
-        # --------------------------------------
-        # [batch, seq, embed_dim]
-        # --------------------------------------
 
         out, hidden = self.gru(x)
 
-        # --------------------------------------
-        # out:
-        # [batch, seq, hidden_dim]
-        # --------------------------------------
 
         logits = self.output(out)
 
-        # --------------------------------------
-        # [batch, seq, vocab_size]
-        # --------------------------------------
 
         return logits

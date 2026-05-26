@@ -1,6 +1,4 @@
 venv/
-*/checkpoints
-checkpoints/
 dataset/
 ./dataset/*
 */__pycache__/
@@ -9,3 +7,4 @@ dataset/
 *.pth
 *.h5
 ./dataset/*
+*/node_modules/*

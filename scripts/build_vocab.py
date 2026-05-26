@@ -1,27 +1,19 @@
+#build_vocab.py
 from pathlib import Path
 import json
 from collections import Counter
 
-# ======================================================
-# PATHS
-# ======================================================
 
 TRAJ_DIR   = Path("dataset/trajectories/train")
 OUTPUT_DIR = Path("dataset/vocab")
 
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-# ======================================================
-# COUNTERS / SETS
-# ======================================================
 
 move_counter = Counter()
 players      = set()
 speeds       = set()
 
-# ======================================================
-# PROCESS FILES
-# ======================================================
 
 for jsonl_file in TRAJ_DIR.glob("*.jsonl"):
 
@@ -46,9 +38,6 @@ for jsonl_file in TRAJ_DIR.glob("*.jsonl"):
 
             speeds.add(record["speed"])
 
-# ======================================================
-# BUILD MOVE VOCAB
-# ======================================================
 
 move_vocab = {"<PAD>": 0, "<UNK>": 1}
 
@@ -57,27 +46,18 @@ for token, _ in sorted(
 ):
     move_vocab[token] = len(move_vocab)
 
-# ======================================================
-# BUILD PLAYER VOCAB
-# ======================================================
 
 player_vocab = {"<UNK_PLAYER>": 0}
 
 for player in sorted(players):
     player_vocab[player] = len(player_vocab)
 
-# ======================================================
-# BUILD SPEED VOCAB
-# ======================================================
 
 speed_vocab = {"<UNK_SPEED>": 0}
 
 for speed in sorted(speeds):
     speed_vocab[speed] = len(speed_vocab)
 
-# ======================================================
-# PRINT RESULTS
-# ======================================================
 
 print("\n" + "=" * 60)
 print("VOCAB SUMMARY")
@@ -101,9 +81,6 @@ if "opponent" not in player_vocab:
 else:
     print(f"\nOpponent label OK — id: {player_vocab['opponent']}")
 
-# ======================================================
-# SAVE
-# ======================================================
 
 with open(OUTPUT_DIR / "move_vocab.json", "w", encoding="utf-8") as f:
     json.dump(move_vocab, f, indent=2)

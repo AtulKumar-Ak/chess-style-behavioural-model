@@ -4,7 +4,6 @@ from collections import Counter
 
 FILTERED_DIR = Path("dataset/final")
 
-# ======================================================
 
 for jsonl_file in FILTERED_DIR.glob("*.jsonl"):
 
@@ -23,7 +22,6 @@ for jsonl_file in FILTERED_DIR.glob("*.jsonl"):
     elo_sum = 0
     elo_count = 0
 
-    # ==================================================
 
     with open(jsonl_file, encoding="utf-8") as f:
 
@@ -35,9 +33,6 @@ for jsonl_file in FILTERED_DIR.glob("*.jsonl"):
 
             total_games += 1
 
-            # ------------------------------------------
-            # MOVES
-            # ------------------------------------------
 
             move_count = metadata["move_count"]
 
@@ -45,17 +40,11 @@ for jsonl_file in FILTERED_DIR.glob("*.jsonl"):
 
             move_lengths.append(move_count)
 
-            # ------------------------------------------
-            # SPEED
-            # ------------------------------------------
 
             speed_counter[
                 metadata["speed"]
             ] += 1
 
-            # ------------------------------------------
-            # OPENINGS
-            # ------------------------------------------
 
             opening = metadata["opening"]
 
@@ -65,9 +54,6 @@ for jsonl_file in FILTERED_DIR.glob("*.jsonl"):
                     opening
                 ] += 1
 
-            # ------------------------------------------
-            # ELO
-            # ------------------------------------------
 
             avg_elo = (
                 metadata["white_elo"]
@@ -78,9 +64,6 @@ for jsonl_file in FILTERED_DIR.glob("*.jsonl"):
             elo_sum += avg_elo
             elo_count += 1
 
-    # ==================================================
-    # FINAL STATS
-    # ==================================================
 
     avg_moves = (
         total_moves / total_games
@@ -92,16 +75,12 @@ for jsonl_file in FILTERED_DIR.glob("*.jsonl"):
         if elo_count > 0 else 0
     )
 
-    # ==================================================
 
     print(f"\nTOTAL GAMES      : {total_games}")
     print(f"TOTAL MOVES      : {total_moves}")
     print(f"AVERAGE MOVES    : {avg_moves:.2f}")
     print(f"AVERAGE ELO      : {avg_elo:.2f}")
 
-    # ==================================================
-    # SPEED DISTRIBUTION
-    # ==================================================
 
     print("\nSPEED DISTRIBUTION")
 
@@ -117,9 +96,6 @@ for jsonl_file in FILTERED_DIR.glob("*.jsonl"):
             f" ({pct:.2f}%)"
         )
 
-    # ==================================================
-    # TOP OPENINGS
-    # ==================================================
 
     print("\nTOP OPENINGS")
 
@@ -129,9 +105,6 @@ for jsonl_file in FILTERED_DIR.glob("*.jsonl"):
             f"{count:6}  {opening}"
         )
 
-    # ==================================================
-    # MOVE LENGTH STATS
-    # ==================================================
 
     if move_lengths:
 

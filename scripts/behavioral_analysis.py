@@ -9,9 +9,6 @@ import torch
 
 from src.models.gpt_model import GPTBehaviorModel
 
-# ======================================================
-# DEVICE
-# ======================================================
 
 device = torch.device(
     "cuda" if torch.cuda.is_available() else "cpu"
@@ -19,32 +16,18 @@ device = torch.device(
 
 print("\nDEVICE:", device)
 
-# ======================================================
-# STOCKFISH
-# ======================================================
 
 STOCKFISH_PATH = (
     r"C:\stockfish\stockfish-windows-x86-64-avx2.exe"
 )
 
-# ======================================================
-# SETTINGS
-# ======================================================
 
 ROLLOUTS_PER_PLAYER = 80
 MAX_NEW_MOVES = 40
 TEMPERATURE = 0.7
 TOP_K = 10
-
-# Rollouts where a single move causes an eval swing
-# larger than this are treated as "collapsed" games
-# and excluded from summary statistics.
-# 1000 cp ~ a piece blunder leading to resignable position.
 OUTLIER_SWING_THRESHOLD = 1000
 
-# ======================================================
-# LOAD VOCABS
-# ======================================================
 
 with open("dataset/vocab/move_vocab.json", encoding="utf-8") as f:
     move_vocab = json.load(f)
@@ -57,9 +40,6 @@ id_to_move = {idx: move for move, idx in move_vocab.items()}
 vocab_size  = len(move_vocab)
 num_players = len(player_vocab)
 
-# ======================================================
-# MODEL
-# ======================================================
 
 model = GPTBehaviorModel(
     vocab_size=vocab_size,
@@ -82,9 +62,6 @@ model.eval()
 
 print("\nMODEL LOADED")
 
-# ======================================================
-# PLAYERS
-# ======================================================
 
 PLAYERS = [
     "MagnusCarlsen",
@@ -93,9 +70,6 @@ PLAYERS = [
     "lachesisQ"
 ]
 
-# ======================================================
-# SEED MOVES
-# ======================================================
 
 seed_moves = [
     "P_e2e4",
@@ -104,9 +78,6 @@ seed_moves = [
     "N_b8c6"
 ]
 
-# ======================================================
-# CSV OUTPUT  (raw rollout results)
-# ======================================================
 
 csv_path     = "behavioral_results.csv"
 summary_path = "behavioral_summary.csv"
@@ -122,21 +93,12 @@ writer.writerow([
     "outlier_flagged"  # 1 if max_swing > threshold
 ])
 
-# ======================================================
-# STOCKFISH
-# ======================================================
 
 engine = chess.engine.SimpleEngine.popen_uci(STOCKFISH_PATH)
 
-# ======================================================
-# ACCUMULATE PER-PLAYER DATA FOR SUMMARY
-# ======================================================
 
 player_records = {p: [] for p in PLAYERS}
 
-# ======================================================
-# MAIN LOOP
-# ======================================================
 
 for player_name in PLAYERS:
 
@@ -166,9 +128,6 @@ for player_name in PLAYERS:
 
         evaluations = []
 
-        # ----------------------------------------------
-        # GENERATION
-        # ----------------------------------------------
 
         with torch.no_grad():
 
@@ -226,9 +185,6 @@ for player_name in PLAYERS:
 
                 evaluations.append(eval_cp)
 
-        # ----------------------------------------------
-        # ROLLOUT METRICS
-        # ----------------------------------------------
 
         if len(evaluations) < 2:
             continue
@@ -259,9 +215,6 @@ for player_name in PLAYERS:
             "is_outlier":      bool(is_outlier)
         })
 
-# ======================================================
-# SUMMARY STATS  (mean, median, std — clean vs all)
-# ======================================================
 
 engine.quit()
 csv_file.close()
@@ -273,12 +226,10 @@ summary_writer.writerow([
     "n_total",
     "n_clean",        # rollouts below threshold
     "n_outliers",
-    # ---- eval ----
     "mean_eval_all",
     "mean_eval_clean",
     "median_eval_clean",
     "std_eval_clean",
-    # ---- volatility ----
     "mean_vol_all",
     "mean_vol_clean",
     "median_vol_clean",

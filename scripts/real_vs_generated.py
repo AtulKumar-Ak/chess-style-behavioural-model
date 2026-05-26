@@ -10,6 +10,7 @@ import chess.engine
 import torch
 
 from src.models.gpt_model import GPTBehaviorModel
+from src.dataset import board_to_torch
 
 PIECE_MAP = {
     chess.PAWN:   "P",
@@ -20,16 +21,10 @@ PIECE_MAP = {
     chess.KING:   "K",
 }
 
-# ======================================================
-# DEVICE
-# ======================================================
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print("\nDEVICE:", device)
 
-# ======================================================
-# SETTINGS
-# ======================================================
 
 STOCKFISH_PATH          = r"C:\stockfish\stockfish-windows-x86-64-avx2.exe"
 CHECKPOINT_PATH         = "checkpoints/gpt_best.pt"
@@ -56,36 +51,24 @@ PLAYER_FILE_ALIASES = {
     "lachesisQ":     ["nepo"],
 }
 
-# All account name variants across chesscom / lichess / pgnmentor
 PLAYER_ACCOUNTS = {
     "MagnusCarlsen": [
-        "magnuscarlsen",    # chesscom
-        "drnykterstein",    # lichess
-        "carlsen,magnus",   # pgnmentor full
-        "carlsen,m",        # pgnmentor short
+        "magnuscarlsen",
+        "drnykterstein",
     ],
     "Hikaru": [
-        "hikaru",           # chesscom + lichess
-        "nakamura,hikaru",  # pgnmentor full
-        "nakamura,h",       # pgnmentor short
+        "hikaru",
     ],
     "alireza2003": [
-        "firouzja2003",     # chesscom
-        "alireza2003",      # lichess
-        "firouzja,alireza", # pgnmentor full
-        "firouzja,a",       # pgnmentor short
+        "firouzja2003",
+        "alireza2003",
     ],
     "lachesisQ": [
-        "lachesisq",            # chesscom
-        "nepo",                 # lichess
-        "nepomniachtchi,ian",   # pgnmentor full
-        "nepomniachtchi,i",     # pgnmentor short
+        "lachesisq",
+        "nepo",
     ],
 }
 
-# ======================================================
-# LOAD VOCABS
-# ======================================================
 
 with open("dataset/vocab/move_vocab.json", encoding="utf-8") as f:
     move_vocab = json.load(f)
@@ -93,43 +76,53 @@ with open("dataset/vocab/move_vocab.json", encoding="utf-8") as f:
 with open("dataset/vocab/player_vocab.json", encoding="utf-8") as f:
     player_vocab = json.load(f)
 
-# ======================================================
-# MODEL
-# ======================================================
+
+ckpt = torch.load(CHECKPOINT_PATH, map_location=device)
+state_dict = (
+    ckpt["model_state_dict"]
+    if isinstance(ckpt, dict) and "model_state_dict" in ckpt
+    else ckpt
+)
+
+ckpt_vocab_size  = state_dict["token_embedding.weight"].shape[0]
+ckpt_num_players = state_dict["player_embedding.weight"].shape[0]
+
+if ckpt_vocab_size != len(move_vocab):
+    print(
+        f"\nNOTE: checkpoint vocab ({ckpt_vocab_size}) != "
+        f"move_vocab.json ({len(move_vocab)}). Using checkpoint size.\n"
+    )
 
 model = GPTBehaviorModel(
-    vocab_size=len(move_vocab),
+    vocab_size=ckpt_vocab_size,
     max_seq_len=63,
     embed_dim=384,
     num_heads=6,
     num_layers=6,
     dropout=0.1,
-    num_players=len(player_vocab)
+    num_players=ckpt_num_players
 )
 
-ckpt = torch.load(CHECKPOINT_PATH, map_location=device)
-if isinstance(ckpt, dict) and "model_state_dict" in ckpt:
-    model.load_state_dict(ckpt["model_state_dict"])
-else:
-    model.load_state_dict(ckpt)
-
+model.load_state_dict(state_dict)
 model = model.to(device)
 model.eval()
-print("MODEL LOADED")
+print(f"MODEL LOADED  (vocab={ckpt_vocab_size}, players={ckpt_num_players})")
 
-# ======================================================
-# STOCKFISH
-# ======================================================
 
 engine = chess.engine.SimpleEngine.popen_uci(STOCKFISH_PATH)
 
-# ======================================================
-# HELPERS
-# ======================================================
+
+def get_player_tensor(name):
+    pid = player_vocab.get(name, player_vocab.get("opponent", 0))
+    pid = min(pid, ckpt_num_players - 1)
+    return torch.tensor([pid], dtype=torch.long, device=device)
+
+opponent_tensor = get_player_tensor("opponent")
+
 
 def get_player_side(metadata, target_player):
-    white_lower = metadata["white"].lower()
-    black_lower = metadata["black"].lower()
+    white_lower = metadata.get("white", "").lower()
+    black_lower = metadata.get("black", "").lower()
     for account in PLAYER_ACCOUNTS.get(target_player, []):
         if account in white_lower:
             return True
@@ -139,6 +132,14 @@ def get_player_side(metadata, target_player):
 
 
 def analyze_moves(move_tokens, start_board):
+    """
+    Analyzes a sequence of piece-aware tokens from start_board.
+
+    Queen trade definition: a move that CAPTURES a queen.
+    This counts both sides — if white captures black's queen
+    or black captures white's queen, it counts as a queen trade.
+    This is consistent and symmetric.
+    """
     board        = start_board.copy()
     evaluations  = []
     captures     = 0
@@ -157,21 +158,17 @@ def analyze_moves(move_tokens, start_board):
         if board.is_capture(move):
             captures += 1
 
-        piece = board.piece_at(move.from_square)
-        if piece is not None and piece.piece_type == chess.QUEEN:
-            if board.is_capture(move):
+            # Count captures OF a queen (symmetric definition)
+            captured_piece = board.piece_at(move.to_square)
+            if (captured_piece is not None and
+                    captured_piece.piece_type == chess.QUEEN):
                 queen_trades += 1
 
         board.push(move)
 
-        info  = engine.analyse(board, chess.engine.Limit(depth=10))
-        score = info["score"].white()
-
-        if score.is_mate():
-            eval_cp = 10000
-        else:
-            eval_cp = score.score() or 0
-
+        info    = engine.analyse(board, chess.engine.Limit(depth=10))
+        score   = info["score"].white()
+        eval_cp = 10000 if score.is_mate() else (score.score() or 0)
         evaluations.append(eval_cp)
 
     if len(evaluations) < 2:
@@ -207,17 +204,16 @@ def build_board_from_tokens(move_tokens):
 
 def load_game_seeds(player_name, n):
     """
-    Load n game seeds from the test split.
-    Seeds come from all sources including pgnmentor.
-    Each seed contains the first SEED_CONTEXT_MOVES moves
-    as context and the next MAX_NEW_MOVES moves as the
-    real continuation to compare against.
+    Loads n seeds from test split.
+    Stores is_white so generation can alternate embeddings.
     """
     aliases = PLAYER_FILE_ALIASES[player_name]
     seeds   = []
 
     for filename in sorted(os.listdir(TRAJECTORY_DIR)):
         if not filename.endswith(".jsonl"):
+            continue
+        if "pgnmentor" in filename.lower():
             continue
         if not any(a in filename.lower() for a in aliases):
             continue
@@ -238,7 +234,6 @@ def load_game_seeds(player_name, n):
                 if is_white is None:
                     continue
 
-                # Convert raw UCI to piece-aware tokens
                 board       = chess.Board()
                 token_moves = []
                 valid       = True
@@ -266,6 +261,7 @@ def load_game_seeds(player_name, n):
                         SEED_CONTEXT_MOVES:
                         SEED_CONTEXT_MOVES + MAX_NEW_MOVES
                     ],
+                    "is_white": is_white,
                 })
 
         if len(seeds) >= n:
@@ -275,14 +271,29 @@ def load_game_seeds(player_name, n):
     return seeds[:n]
 
 
-def generate_from_seed(seed_tokens, player_name):
+def generate_from_seed(seed_tokens, player_name, is_white):
+    """
+    Generates MAX_NEW_MOVES moves from the seed position.
+
+    Alternates player embeddings per turn:
+      target player turns  → target player embedding
+      opponent turns       → opponent embedding
+
+    This produces a realistic two-player game rather than
+    one style playing against itself.
+
+    is_white: True  = target player plays white
+              False = target player plays black
+    """
     if player_name not in player_vocab:
         return None
 
-    player_id     = player_vocab[player_name]
-    player_tensor = torch.tensor(
-        [player_id], dtype=torch.long, device=device
-    )
+    player_id = player_vocab[player_name]
+    if player_id >= ckpt_num_players:
+        print(f"  WARNING: {player_name} id={player_id} exceeds checkpoint")
+        return None
+
+    target_tensor = get_player_tensor(player_name)
 
     board, ok = build_board_from_tokens(seed_tokens)
     if not ok:
@@ -295,14 +306,32 @@ def generate_from_seed(seed_tokens, player_name):
 
     generated_tokens = []
 
+    # First generated move is at index SEED_CONTEXT_MOVES
+    # White moves at even indices (0,2,4,...), black at odd
+    move_index = SEED_CONTEXT_MOVES
+
     with torch.no_grad():
         for _ in range(MAX_NEW_MOVES):
 
+            # Alternate embedding based on whose turn it is
+            white_to_move = (move_index % 2 == 0)
+            current_tensor = (
+                target_tensor
+                if white_to_move == is_white
+                else opponent_tensor
+            )
+
             context = input_ids[-63:]
-            x       = torch.tensor([context], dtype=torch.long, device=device)
-            logits  = model(x, player_tensor)
-            logits  = logits[:, -1, :] / TEMPERATURE
-            probs   = torch.softmax(logits, dim=-1)
+            x       = torch.tensor(
+                [context], dtype=torch.long, device=device
+            )
+
+            # Board state conditioning
+            board_state = board_to_torch(board).unsqueeze(0).to(device)
+
+            logits = model(x, current_tensor, board_state=board_state)
+            logits = logits[:, -1, :] / TEMPERATURE
+            probs  = torch.softmax(logits, dim=-1)
 
             legal_token_ids = []
             legal_moves     = []
@@ -312,7 +341,7 @@ def generate_from_seed(seed_tokens, player_name):
                 piece        = board.piece_at(legal_move.from_square)
                 piece_symbol = piece.symbol().upper()
                 token        = f"{piece_symbol}_{uci}"
-                if token in move_vocab:
+                if token in move_vocab and move_vocab[token] < ckpt_vocab_size:
                     legal_token_ids.append(move_vocab[token])
                     legal_moves.append(token)
 
@@ -333,12 +362,10 @@ def generate_from_seed(seed_tokens, player_name):
             input_ids.append(next_token_id)
             generated_tokens.append(next_move)
             board.push(chess.Move.from_uci(next_move.split("_")[1]))
+            move_index += 1
 
     return generated_tokens
 
-# ======================================================
-# MAIN LOOP
-# ======================================================
 
 real_results      = defaultdict(list)
 generated_results = defaultdict(list)
@@ -350,7 +377,7 @@ for player_name in PLAYERS:
     print(f"{'='*60}")
 
     seeds = load_game_seeds(player_name, n=GENERATED_ROLLOUTS)
-    print(f"  Loaded {len(seeds)} game seeds")
+    print(f"  Seeds loaded: {len(seeds)}")
 
     if not seeds:
         print("  NO SEEDS FOUND — skipping")
@@ -360,6 +387,7 @@ for player_name in PLAYERS:
 
         seed_tokens      = seed["seed_tokens"]
         post_seed_tokens = seed["post_seed_tokens"]
+        is_white         = seed["is_white"]
 
         seed_board, ok = build_board_from_tokens(seed_tokens)
         if not ok:
@@ -369,7 +397,9 @@ for player_name in PLAYERS:
         if real_metrics is not None:
             real_results[player_name].append(real_metrics)
 
-        gen_tokens = generate_from_seed(seed_tokens, player_name)
+        gen_tokens = generate_from_seed(
+            seed_tokens, player_name, is_white
+        )
         if gen_tokens:
             gen_metrics = analyze_moves(gen_tokens, seed_board)
             if gen_metrics is not None:
@@ -378,23 +408,16 @@ for player_name in PLAYERS:
         if (i + 1) % 10 == 0:
             print(f"  {i+1}/{len(seeds)} done")
 
-    print(f"  Real results     : {len(real_results[player_name])}")
-    print(f"  Generated results: {len(generated_results[player_name])}")
+    print(f"  Real      : {len(real_results[player_name])}")
+    print(f"  Generated : {len(generated_results[player_name])}")
 
-# ======================================================
-# CLEANUP
-# ======================================================
 
 engine.quit()
 
-# ======================================================
-# SUMMARIZE
-# ======================================================
 
 def summarize(records, label):
     if not records:
         return {}
-
     clean = [r for r in records if not r["outlier"]]
 
     def m(lst, key):
@@ -412,7 +435,6 @@ def summarize(records, label):
         "mean_captures":     m(records, "captures"),
         "mean_queen_trades": m(records, "queen_trades"),
     }
-
 
 rows = []
 for player in PLAYERS:
@@ -436,14 +458,13 @@ with open(output_csv, "w", newline="", encoding="utf-8") as f:
     writer.writeheader()
     writer.writerows(rows)
 
-# ======================================================
-# PRINT
-# ======================================================
-
 print("\n" + "=" * 60)
 print("REAL vs GENERATED SUMMARY")
-print(f"Seed context : first {SEED_CONTEXT_MOVES} moves of real game")
-print(f"Evaluated on : next {MAX_NEW_MOVES} moves (same game phase)")
+print(f"Seed       : first {SEED_CONTEXT_MOVES} moves of real game")
+print(f"Eval       : next {MAX_NEW_MOVES} moves (same game phase)")
+print(f"Generation : target embedding on target turns,")
+print(f"             opponent embedding on opponent turns")
+print("Queen trade: any capture of a queen (symmetric)")
 print("=" * 60)
 
 for player in PLAYERS:
@@ -460,5 +481,5 @@ for player in PLAYERS:
             f"queen_trades={row['mean_queen_trades']:>4}"
         )
 
-print(f"\nRESULTS SAVED TO: {output_csv}")
+print(f"\nSAVED: {output_csv}")
 print("\nDONE.")

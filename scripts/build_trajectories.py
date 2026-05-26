@@ -1,32 +1,21 @@
+# build_trajectories.py
 from pathlib import Path
 import json
 
 import chess
 
-# ======================================================
-# INPUT / OUTPUT
-# ======================================================
 
 SPLITS_DIR      = Path("dataset/splits")
 OUTPUT_BASE_DIR = Path("dataset/trajectories")
 
-# ======================================================
-# CONTEXT SIZE
-# ======================================================
 
 CONTEXT_SIZE = 64
 
-# ======================================================
-# PHASE-AWARE STRIDE
-# ======================================================
 
 OPENING_CUTOFF = 40
 OPENING_STRIDE = 8
 MIDGAME_STRIDE = 2
 
-# ======================================================
-# PIECE PREFIXES
-# ======================================================
 
 PIECE_MAP = {
     chess.PAWN:   "P",
@@ -37,9 +26,6 @@ PIECE_MAP = {
     chess.KING:   "K",
 }
 
-# ======================================================
-# PLAYER FILE MAP
-# ======================================================
 
 PLAYER_FILE_MAP = {
     "magnus":  "MagnusCarlsen",
@@ -48,11 +34,6 @@ PLAYER_FILE_MAP = {
     "nepo":    "lachesisQ",
 }
 
-# ======================================================
-# ACCOUNT NAMES
-# All known account name variants per canonical player,
-# across chesscom / lichess / pgnmentor.
-# ======================================================
 
 PLAYER_ACCOUNTS = {
     "MagnusCarlsen": [
@@ -80,13 +61,9 @@ PLAYER_ACCOUNTS = {
     ],
 }
 
-# ======================================================
-# OPPONENT LABEL
-# ======================================================
 
 OPPONENT_LABEL = "opponent"
 
-# ======================================================
 
 def move_to_token(board, move):
     piece = board.piece_at(move.from_square)
@@ -105,9 +82,6 @@ def get_player_side(metadata, target_player):
             return False
     return None
 
-# ======================================================
-# PROCESS SPLITS
-# ======================================================
 
 for split in ["train", "val", "test"]:
 

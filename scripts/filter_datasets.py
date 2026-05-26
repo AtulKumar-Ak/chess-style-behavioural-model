@@ -20,7 +20,6 @@ from src.filters.pgnmentor_filter import (
     pgnmentor_filter
 )
 
-# =====================================================
 
 RAW_DIR = Path("dataset/raw_pgns")
 
@@ -31,7 +30,6 @@ OUTPUT_DIR.mkdir(
     exist_ok=True
 )
 
-# =====================================================
 
 for pgn_file in RAW_DIR.rglob("*.pgn"):
 
@@ -39,7 +37,6 @@ for pgn_file in RAW_DIR.rglob("*.pgn"):
     print("PROCESSING:", pgn_file)
     print("=" * 60)
 
-    # -------------------------------------------------
 
     if "lichess" in str(pgn_file).lower():
 
@@ -58,7 +55,6 @@ for pgn_file in RAW_DIR.rglob("*.pgn"):
         print("UNKNOWN PLATFORM")
         continue
 
-    # -------------------------------------------------
 
     output_path = (
         OUTPUT_DIR /
@@ -68,7 +64,6 @@ for pgn_file in RAW_DIR.rglob("*.pgn"):
     total_games = 0
     valid_games = 0
 
-    # =================================================
 
     with open(
         output_path,
@@ -85,9 +80,6 @@ for pgn_file in RAW_DIR.rglob("*.pgn"):
                 platform
             )
 
-            # -----------------------------------------
-            # FILTERING
-            # -----------------------------------------
 
             if platform == "lichess":
 
@@ -112,9 +104,6 @@ for pgn_file in RAW_DIR.rglob("*.pgn"):
 
             valid_games += 1
 
-            # -----------------------------------------
-            # UCI MOVES
-            # -----------------------------------------
 
             moves = [
 
@@ -123,9 +112,6 @@ for pgn_file in RAW_DIR.rglob("*.pgn"):
                 for move in game.mainline_moves()
             ]
 
-            # -----------------------------------------
-            # FINAL RECORD
-            # -----------------------------------------
 
             record = {
 
@@ -144,7 +130,6 @@ for pgn_file in RAW_DIR.rglob("*.pgn"):
                 + "\n"
             )
 
-    # =================================================
 
     print(f"TOTAL GAMES : {total_games}")
     print(f"VALID GAMES : {valid_games}")

@@ -21,14 +21,11 @@ TOP_K     = 5
 MAX_GAMES = 30
 
 # Change to test any player
-TARGET_PLAYER = "Hikaru"
+TARGET_PLAYER = "lachesisQ"
 
 # Test prediction accuracy at these move indices
 TEST_AT_MOVES = [10, 20, 30, 40]
 
-# ======================================================
-# PLAYER FILE ALIASES
-# ======================================================
 
 PLAYER_FILE_ALIASES = {
     "MagnusCarlsen": ["magnus"],
@@ -40,9 +37,6 @@ PLAYER_FILE_ALIASES = {
 print(f"\nDEVICE      : {DEVICE}")
 print(f"TARGET      : {TARGET_PLAYER}")
 
-# ======================================================
-# LOAD VOCABS
-# ======================================================
 
 with open("dataset/vocab/move_vocab.json", encoding="utf-8") as f:
     move_vocab = json.load(f)
@@ -53,9 +47,6 @@ with open("dataset/vocab/player_vocab.json", encoding="utf-8") as f:
 print(f"VOCAB SIZE  : {len(move_vocab)}")
 print(f"NUM PLAYERS : {len(player_vocab)}")
 
-# ======================================================
-# MODEL
-# ======================================================
 
 model = GPTBehaviorModel(
     vocab_size=len(move_vocab),
@@ -77,9 +68,6 @@ model = model.to(DEVICE)
 model.eval()
 print("MODEL LOADED")
 
-# ======================================================
-# PLAYER TENSOR
-# ======================================================
 
 if TARGET_PLAYER not in player_vocab:
     print(f"\nERROR: '{TARGET_PLAYER}' not in player_vocab.")
@@ -95,9 +83,6 @@ player_tensor = torch.tensor(
 )
 print(f"PLAYER ID   : {player_id}")
 
-# ======================================================
-# PREDICTION FUNCTION
-# ======================================================
 
 def predict_at_position(token_moves, predict_at):
     """
@@ -173,9 +158,6 @@ def predict_at_position(token_moves, predict_at):
 
     return true_move, predicted_moves, rank
 
-# ======================================================
-# FIND TEST FILES
-# ======================================================
 
 target_files = []
 aliases      = PLAYER_FILE_ALIASES[TARGET_PLAYER]
@@ -198,27 +180,6 @@ if not target_files:
     print("\nERROR: No test files found.")
     exit()
 
-# ======================================================
-# MAIN TEST LOOP
-#
-# Trajectory files store:
-#   "player": canonical name (e.g. "MagnusCarlsen")
-#   "moves":  piece-aware tokens
-#
-# The "player" field is already the label from
-# build_trajectories.py — no metadata lookup needed.
-# Windows labeled "opponent" are skipped since we only
-# want to test prediction on target player moves.
-#
-# We can't determine is_white from trajectory files
-# (metadata was stripped). Instead we determine it from
-# move parity: in build_trajectories, a window at index i
-# has predicted_move_idx = i + CONTEXT_SIZE - 1.
-# But here we test at specific depths, so we check whether
-# the move at that depth is consistent with the context —
-# the board replay handles legality, and parity of the
-# depth index tells us whose move it is globally.
-# ======================================================
 
 depth_metrics = defaultdict(lambda: {
     "top1": 0, "top5": 0, "total": 0, "ranks": []
@@ -284,9 +245,6 @@ for filepath in target_files:
             else:
                 games_skipped += 1
 
-# ======================================================
-# RESULTS
-# ======================================================
 
 print("\n" + "=" * 60)
 print(f"MOVE PREDICTION ACCURACY — {TARGET_PLAYER}")

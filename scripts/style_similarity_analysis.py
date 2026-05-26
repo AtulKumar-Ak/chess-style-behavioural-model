@@ -13,9 +13,6 @@ from src.models.gpt_model import (
     GPTBehaviorModel
 )
 
-# ======================================================
-# DEVICE
-# ======================================================
 
 device = torch.device(
 
@@ -26,17 +23,11 @@ device = torch.device(
 
 print("\nDEVICE:", device)
 
-# ======================================================
-# STOCKFISH
-# ======================================================
 
 STOCKFISH_PATH = (
     r"C:\stockfish\stockfish-windows-x86-64-avx2.exe"
 )
 
-# ======================================================
-# LOAD VOCABS
-# ======================================================
 
 with open(
     "dataset/vocab/move_vocab.json",
@@ -52,17 +43,11 @@ with open(
 
     player_vocab = json.load(f)
 
-# ======================================================
-# MODEL CONFIG
-# ======================================================
 
 VOCAB_SIZE = len(move_vocab)
 
 NUM_PLAYERS = len(player_vocab)
 
-# ======================================================
-# MODEL
-# ======================================================
 
 model = GPTBehaviorModel(
 
@@ -81,9 +66,6 @@ model = GPTBehaviorModel(
     num_players=NUM_PLAYERS
 )
 
-# ======================================================
-# LOAD CHECKPOINT
-# ======================================================
 
 checkpoint_path = (
     "checkpoints/gpt_latest.pt"
@@ -105,9 +87,6 @@ model.eval()
 
 print("\nMODEL LOADED")
 
-# ======================================================
-# PLAYERS
-# ======================================================
 
 PLAYERS = [
 
@@ -120,9 +99,6 @@ PLAYERS = [
     "lachesisQ"
 ]
 
-# ======================================================
-# SETTINGS
-# ======================================================
 
 ROLLOUTS_PER_PLAYER = 30
 
@@ -132,9 +108,6 @@ TEMPERATURE = 0.8
 
 TOP_K = 10
 
-# ======================================================
-# SEED
-# ======================================================
 
 seed_moves = [
 
@@ -144,23 +117,14 @@ seed_moves = [
     "N_b8c6"
 ]
 
-# ======================================================
-# STOCKFISH
-# ======================================================
 
 engine = chess.engine.SimpleEngine.popen_uci(
     STOCKFISH_PATH
 )
 
-# ======================================================
-# METRIC STORAGE
-# ======================================================
 
 results = defaultdict(list)
 
-# ======================================================
-# GENERATION LOOP
-# ======================================================
 
 for player_name in PLAYERS:
 
@@ -184,7 +148,6 @@ for player_name in PLAYERS:
         device=device
     )
 
-    # ==================================================
 
     for rollout_idx in range(
         ROLLOUTS_PER_PLAYER
@@ -213,7 +176,6 @@ for player_name in PLAYERS:
 
         captures = 0
 
-        # ==============================================
 
         with torch.no_grad():
 
@@ -248,9 +210,6 @@ for player_name in PLAYERS:
                     dim=-1
                 )
 
-                # ======================================
-                # LEGAL MOVES
-                # ======================================
 
                 legal_token_ids = []
 
@@ -296,7 +255,6 @@ for player_name in PLAYERS:
 
                     break
 
-                # ======================================
 
                 legal_probs = probs[
                     0,
@@ -354,9 +312,6 @@ for player_name in PLAYERS:
                     sampled_idx
                 ]
 
-                # ======================================
-                # METRICS
-                # ======================================
 
                 if board.is_capture(
                     next_chess_move
@@ -378,9 +333,6 @@ for player_name in PLAYERS:
 
                             queen_trades += 1
 
-                # ======================================
-                # UPDATE
-                # ======================================
 
                 input_ids.append(
                     next_token_id
@@ -390,9 +342,6 @@ for player_name in PLAYERS:
                     next_chess_move
                 )
 
-                # ======================================
-                # STOCKFISH ANALYSIS
-                # ======================================
 
                 info = engine.analyse(
 
@@ -423,7 +372,6 @@ for player_name in PLAYERS:
                     eval_cp
                 )
 
-        # ==================================================
 
         if len(evaluations) < 2:
 
@@ -448,9 +396,6 @@ for player_name in PLAYERS:
             "queen_trades": queen_trades
         })
 
-# ======================================================
-# SAVE AGGREGATED RESULTS
-# ======================================================
 
 output_csv = "style_similarity_results.csv"
 
@@ -476,7 +421,6 @@ with open(
         "mean_queen_trades"
     ])
 
-    # ==============================================
 
     for player_name, player_results in results.items():
 
@@ -513,9 +457,6 @@ with open(
             round(mean_queen_trades, 2)
         ])
 
-# ======================================================
-# CLEANUP
-# ======================================================
 
 engine.quit()
 

@@ -13,9 +13,6 @@ from src.models.gru_model import (
     GRUBehaviorModel
 )
 
-# ======================================================
-# DEVICE
-# ======================================================
 
 device = torch.device(
 
@@ -26,9 +23,6 @@ device = torch.device(
 
 print("\nDEVICE:", device)
 
-# ======================================================
-# LOAD VOCAB SIZE
-# ======================================================
 
 with open(
     "dataset/vocab/move_vocab.json",
@@ -41,9 +35,6 @@ vocab_size = len(vocab)
 
 print("VOCAB SIZE:", vocab_size)
 
-# ======================================================
-# DATASET
-# ======================================================
 
 train_dataset = ChessBehaviorDataset(
 
@@ -77,9 +68,6 @@ val_loader = DataLoader(
     num_workers=0
 )
 
-# ======================================================
-# MODEL
-# ======================================================
 
 model = GRUBehaviorModel(
 
@@ -88,15 +76,9 @@ model = GRUBehaviorModel(
 
 model = model.to(device)
 
-# ======================================================
-# LOSS
-# ======================================================
 
 criterion = nn.CrossEntropyLoss()
 
-# ======================================================
-# OPTIMIZER
-# ======================================================
 
 optimizer = torch.optim.Adam(
 
@@ -105,13 +87,9 @@ optimizer = torch.optim.Adam(
     lr=1e-3
 )
 
-# ======================================================
-# TRAIN LOOP
-# ======================================================
 
 EPOCHS = 3
 
-# ======================================================
 
 def evaluate(model, loader):
 
@@ -157,9 +135,6 @@ def evaluate(model, loader):
 
 for epoch in range(EPOCHS):
 
-    # ==========================================
-    # TRAINING
-    # ==========================================
 
     print("\n" + "=" * 60)
     print(f"EPOCH {epoch+1}")
@@ -169,7 +144,6 @@ for epoch in range(EPOCHS):
 
     total_loss = 0
 
-    # ==========================================
 
     for step, batch in enumerate(train_loader):
 
@@ -181,17 +155,11 @@ for epoch in range(EPOCHS):
             "labels"
         ].to(device)
 
-        # --------------------------------------
-        # FORWARD
-        # --------------------------------------
 
         logits = model(
             input_ids
         )
 
-        # --------------------------------------
-        # RESHAPE
-        # --------------------------------------
 
         logits = logits.reshape(
 
@@ -201,9 +169,6 @@ for epoch in range(EPOCHS):
 
         labels = labels.reshape(-1)
 
-        # --------------------------------------
-        # LOSS
-        # --------------------------------------
 
         loss = criterion(
 
@@ -211,9 +176,6 @@ for epoch in range(EPOCHS):
             labels
         )
 
-        # --------------------------------------
-        # BACKPROP
-        # --------------------------------------
 
         optimizer.zero_grad()
 
@@ -221,11 +183,9 @@ for epoch in range(EPOCHS):
 
         optimizer.step()
 
-        # --------------------------------------
 
         total_loss += loss.item()
 
-        # --------------------------------------
 
         if step % 100 == 0:
 
@@ -241,9 +201,6 @@ for epoch in range(EPOCHS):
                 f"LOSS {avg_loss:.4f}"
             )
 
-    # ==========================================
-    # VALIDATION
-    # ==========================================
 
     val_loss = evaluate(
 
@@ -265,6 +222,5 @@ for epoch in range(EPOCHS):
         "checkpoints/gru_latest.pt"
     )
 
-# ======================================================
 
 print("\nTRAINING COMPLETE")

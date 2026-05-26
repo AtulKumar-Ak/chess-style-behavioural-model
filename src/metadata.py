@@ -44,9 +44,6 @@ def classify_time_control(tc):
 
 def normalize_variant(headers, platform):
 
-    # ==========================================
-    # LICHESS
-    # ==========================================
 
     if platform == "lichess":
 
@@ -55,30 +52,18 @@ def normalize_variant(headers, platform):
             "Unknown"
         )
 
-    # ==========================================
-    # CHESS.COM
-    # ==========================================
 
     elif platform == "chesscom":
 
-        # --------------------------------------
-        # Missing Variant => Standard
-        # --------------------------------------
 
         if "Variant" not in headers:
             return "Standard"
 
         return headers["Variant"]
     
-    # ==========================================
-    # PGN MENTOR
-    # ==========================================
 
     elif platform == "pgnmentor":
 
-        # --------------------------------------
-        # Missing Variant => Standard
-        # --------------------------------------
 
         if "Variant" not in headers:
             return "Standard"
@@ -107,9 +92,6 @@ def extract_metadata(game, platform):
         )
 
     moves = list(game.mainline_moves())
-    # ======================================
-    # OPENING
-    # ======================================
 
     opening = h.get("Opening", "")
 
@@ -130,9 +112,6 @@ def extract_metadata(game, platform):
 
     metadata = {
 
-        # ======================================
-        # PLAYERS
-        # ======================================
 
         "white":
             h.get("White", ""),
@@ -140,9 +119,6 @@ def extract_metadata(game, platform):
         "black":
             h.get("Black", ""),
 
-        # ======================================
-        # ELOS
-        # ======================================
 
         "white_elo":
             safe_int(h.get("WhiteElo")),
@@ -150,16 +126,10 @@ def extract_metadata(game, platform):
         "black_elo":
             safe_int(h.get("BlackElo")),
 
-        # ======================================
-        # VARIANT
-        # ======================================
 
         "variant":
             normalize_variant(h, platform),
 
-        # ======================================
-        # TIME CONTROL
-        # ======================================
 
         "time_control":
             tc,
@@ -167,9 +137,6 @@ def extract_metadata(game, platform):
         "speed":
             classify_time_control(tc),
 
-        # ======================================
-        # OPENING
-        # ======================================
 
         "opening":
             opening,
@@ -177,16 +144,10 @@ def extract_metadata(game, platform):
         "eco":
             h.get("ECO", ""),
 
-        # ======================================
-        # TERMINATION
-        # ======================================
 
         "termination":
             h.get("Termination", ""),
 
-        # ======================================
-        # BERSERK
-        # ======================================
 
         "white_berserk":
             h.get("WhiteBerserk", "false"),
@@ -194,9 +155,6 @@ def extract_metadata(game, platform):
         "black_berserk":
             h.get("BlackBerserk", "false"),
 
-        # ======================================
-        # MOVE COUNT
-        # ======================================
 
         "move_count":
             len(moves),

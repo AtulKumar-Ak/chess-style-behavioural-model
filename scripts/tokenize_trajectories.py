@@ -1,17 +1,11 @@
 from pathlib import Path
 import json
 
-# ======================================================
-# PATHS
-# ======================================================
 
 TRAJ_BASE_DIR   = Path("dataset/trajectories")
 VOCAB_DIR       = Path("dataset/vocab")
 OUTPUT_BASE_DIR = Path("dataset/tokenized")
 
-# ======================================================
-# LOAD VOCABS
-# ======================================================
 
 with open(VOCAB_DIR / "move_vocab.json", encoding="utf-8") as f:
     move_vocab = json.load(f)
@@ -34,17 +28,11 @@ if "opponent" not in player_vocab:
 
 print(f"Opponent id      : {player_vocab['opponent']}")
 
-# ======================================================
-# SPECIAL TOKENS
-# ======================================================
 
 MOVE_UNK_ID   = move_vocab["<UNK>"]
 PLAYER_UNK_ID = player_vocab["<UNK_PLAYER>"]
 SPEED_UNK_ID  = speed_vocab["<UNK_SPEED>"]
 
-# ======================================================
-# ENCODERS
-# ======================================================
 
 def encode_moves(tokens):
     return [move_vocab.get(token, MOVE_UNK_ID) for token in tokens]
@@ -55,9 +43,6 @@ def encode_player(player):
 def encode_speed(speed):
     return speed_vocab.get(speed, SPEED_UNK_ID)
 
-# ======================================================
-# PROCESS SPLITS
-# ======================================================
 
 for split in ["train", "val", "test"]:
 
@@ -94,9 +79,6 @@ for split in ["train", "val", "test"]:
 
                 record = json.loads(line)
 
-                # ==========================================
-                # TOKENIZE MOVES
-                # ==========================================
 
                 move_ids = encode_moves(record["moves"])
 
@@ -108,9 +90,6 @@ for split in ["train", "val", "test"]:
                     1 for mid in move_ids if mid == MOVE_UNK_ID
                 )
 
-                # ==========================================
-                # TOKENIZE METADATA
-                # ==========================================
 
                 player_id = encode_player(record["player"])
                 speed_id  = encode_speed(record["speed"])
@@ -124,9 +103,6 @@ for split in ["train", "val", "test"]:
                 if record["player"] == "opponent":
                     opponent_count += 1
 
-                # ==========================================
-                # WRITE TOKENIZED RECORD
-                # ==========================================
 
                 out_f.write(json.dumps({
                     "move_ids":  move_ids,

@@ -1,3 +1,4 @@
+#train_gpt.py
 import json
 
 import torch
@@ -8,9 +9,6 @@ from torch.utils.data import DataLoader
 from src.dataset import ChessBehaviorDataset
 from src.models.gpt_model import GPTBehaviorModel
 
-# ======================================================
-# DEVICE
-# ======================================================
 
 device = torch.device(
     "cuda" if torch.cuda.is_available() else "cpu"
@@ -18,9 +16,6 @@ device = torch.device(
 
 print("\nDEVICE:", device)
 
-# ======================================================
-# CHECKPOINT DIRECTORY
-# ======================================================
 
 CHECKPOINT_DIR = Path(
     "/content/drive/MyDrive/"
@@ -29,9 +24,6 @@ CHECKPOINT_DIR = Path(
 
 CHECKPOINT_DIR.mkdir(parents=True, exist_ok=True)
 
-# ======================================================
-# VOCABS
-# ======================================================
 
 with open("dataset/vocab/player_vocab.json", encoding="utf-8") as f:
     player_vocab = json.load(f)
@@ -45,12 +37,12 @@ with open("dataset/vocab/move_vocab.json", encoding="utf-8") as f:
 vocab_size = len(vocab)
 print("VOCAB SIZE:", vocab_size)
 
-# ======================================================
-# DATASETS
-# ======================================================
 
 train_dataset = ChessBehaviorDataset("dataset/hdf5/train.h5")
 val_dataset   = ChessBehaviorDataset("dataset/hdf5/val.h5")
+
+HAS_BOARD_STATES = train_dataset.board_states is not None
+print(f"BOARD STATES: {'YES' if HAS_BOARD_STATES else 'NO'}")
 
 train_loader = DataLoader(
     train_dataset,
@@ -68,9 +60,6 @@ val_loader = DataLoader(
     pin_memory=True
 )
 
-# ======================================================
-# MODEL
-# ======================================================
 
 model = GPTBehaviorModel(
     vocab_size=vocab_size,
@@ -84,16 +73,10 @@ model = GPTBehaviorModel(
 
 model = model.to(device)
 
-# ======================================================
-# TRAINING CONFIG
-# ======================================================
 
-EPOCHS        = 15
-LEARNING_RATE = 5e-5
+EPOCHS        = 20
+LEARNING_RATE = 3e-5
 
-# ======================================================
-# LOSS, OPTIMIZER, SCHEDULER
-# ======================================================
 
 criterion = nn.CrossEntropyLoss()
 
@@ -102,18 +85,12 @@ optimizer = torch.optim.AdamW(
     lr=LEARNING_RATE
 )
 
-# Cosine decay from LEARNING_RATE down to eta_min.
-# eta_min=1e-5 prevents LR from reaching near-zero
-# by epoch 8, keeping updates meaningful in late epochs.
 scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
     optimizer,
     T_max=EPOCHS,
     eta_min=1e-5
 )
 
-# ======================================================
-# RESUME FROM CHECKPOINT
-# ======================================================
 
 start_epoch   = 0
 best_val_loss = float("inf")
@@ -129,16 +106,9 @@ if resume_path.exists():
         map_location=device
     )
 
-    # --------------------------------------------------
-    # VOCAB SIZE GUARD
-    # If vocab size changed (new dataset), the old
-    # checkpoint is incompatible — skip and warn.
-    # --------------------------------------------------
-
     ckpt_vocab_size = checkpoint.get("vocab_size", None)
 
     if ckpt_vocab_size is not None and ckpt_vocab_size != vocab_size:
-
         print(
             f"\nWARNING: checkpoint vocab size ({ckpt_vocab_size}) "
             f"!= current vocab size ({vocab_size}).\n"
@@ -147,66 +117,54 @@ if resume_path.exists():
         )
 
     else:
-
-        model.load_state_dict(
-            checkpoint["model_state_dict"]
-        )
-
-        optimizer.load_state_dict(
-            checkpoint["optimizer_state_dict"]
-        )
-
-        scheduler.load_state_dict(
-            checkpoint["scheduler_state_dict"]
-        )
-
+        model.load_state_dict(checkpoint["model_state_dict"])
+        optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+        scheduler.load_state_dict(checkpoint["scheduler_state_dict"])
         start_epoch   = checkpoint["epoch"]
-        best_val_loss = checkpoint.get(
-            "best_val_loss", float("inf")
-        )
+        best_val_loss = checkpoint.get("best_val_loss", float("inf"))
 
         print(f"RESUMED FROM EPOCH  : {start_epoch}")
         print(f"BEST VAL LOSS SO FAR: {best_val_loss:.4f}")
         print(f"CURRENT LR          : {scheduler.get_last_lr()}")
 
 else:
-
     print("\nNO RESUME CHECKPOINT — STARTING FRESH")
 
-# ======================================================
-# VALIDATION
-# ======================================================
+
+def get_board_state(batch):
+    if "board_state" in batch:
+        return batch["board_state"].to(device)
+    return None
+
 
 def evaluate(model, loader):
 
     model.eval()
-
     total_loss    = 0
     total_batches = 0
 
     with torch.no_grad():
-
         for batch in loader:
 
-            input_ids  = batch["input_ids"].to(device)
-            labels     = batch["labels"].to(device)
-            player_ids = batch["player"].to(device)
+            input_ids   = batch["input_ids"].to(device)
+            labels      = batch["labels"].to(device)
+            player_ids  = batch["player"].to(device)
+            board_state = get_board_state(batch)
 
-            logits = model(input_ids, player_ids)
+            logits = model(
+                input_ids, player_ids,
+                board_state=board_state
+            )
 
             logits = logits.reshape(-1, vocab_size)
             labels = labels.reshape(-1)
 
             loss = criterion(logits, labels)
-
             total_loss    += loss.item()
             total_batches += 1
 
     return total_loss / total_batches
 
-# ======================================================
-# TRAIN LOOP
-# ======================================================
 
 for epoch in range(start_epoch, EPOCHS):
 
@@ -216,16 +174,19 @@ for epoch in range(start_epoch, EPOCHS):
     print("=" * 70)
 
     model.train()
-
     total_loss = 0
 
     for step, batch in enumerate(train_loader):
 
-        input_ids  = batch["input_ids"].to(device)
-        labels     = batch["labels"].to(device)
-        player_ids = batch["player"].to(device)
+        input_ids   = batch["input_ids"].to(device)
+        labels      = batch["labels"].to(device)
+        player_ids  = batch["player"].to(device)
+        board_state = get_board_state(batch)
 
-        logits = model(input_ids, player_ids)
+        logits = model(
+            input_ids, player_ids,
+            board_state=board_state
+        )
 
         logits = logits.reshape(-1, vocab_size)
         labels = labels.reshape(-1)
@@ -247,26 +208,12 @@ for epoch in range(start_epoch, EPOCHS):
             avg_loss = total_loss / (step + 1)
             print(f"STEP {step} | LOSS {avg_loss:.4f}")
 
-    # ==================================================
-    # SCHEDULER STEP
-    # ==================================================
-
     scheduler.step()
-
-    # ==================================================
-    # VALIDATION
-    # ==================================================
 
     val_loss = evaluate(model, val_loader)
 
     print(f"\nVALIDATION LOSS : {val_loss:.4f}")
     print(f"NEXT EPOCH LR   : {scheduler.get_last_lr()[0]:.2e}")
-
-    # ==================================================
-    # SAVE RESUME CHECKPOINT
-    # vocab_size saved so future runs can detect
-    # incompatible checkpoints automatically.
-    # ==================================================
 
     torch.save(
         {
@@ -283,29 +230,14 @@ for epoch in range(start_epoch, EPOCHS):
 
     print(f"\nRESUME CHECKPOINT SAVED : {resume_path}")
 
-    # ==================================================
-    # SAVE BEST MODEL
-    # ==================================================
-
     if val_loss < best_val_loss:
-
         best_val_loss = val_loss
-
-        best_path = CHECKPOINT_DIR / "gpt_best.pt"
-
+        best_path     = CHECKPOINT_DIR / "gpt_best.pt"
         torch.save(model.state_dict(), best_path)
-
         print(f"BEST MODEL SAVED        : {best_path}")
         print(f"NEW BEST VAL LOSS       : {best_val_loss:.4f}")
-
     else:
-
-        print(
-            f"VAL LOSS DID NOT IMPROVE "
-            f"(best: {best_val_loss:.4f})"
-        )
-
-# ======================================================
+        print(f"VAL LOSS DID NOT IMPROVE (best: {best_val_loss:.4f})")
 
 print("\nTRAINING COMPLETE")
 print(f"BEST VAL LOSS: {best_val_loss:.4f}")

@@ -2,7 +2,6 @@ from pathlib import Path
 import json
 import hashlib
 
-# ======================================================
 
 INPUT_DIR = Path(
     "dataset/final"
@@ -16,7 +15,6 @@ TRAIN_DIR = OUTPUT_DIR / "train"
 VAL_DIR = OUTPUT_DIR / "val"
 TEST_DIR = OUTPUT_DIR / "test"
 
-# ======================================================
 
 TRAIN_DIR.mkdir(
     parents=True,
@@ -33,20 +31,15 @@ TEST_DIR.mkdir(
     exist_ok=True
 )
 
-# ======================================================
 
 TRAIN_RATIO = 0.90
 VAL_RATIO = 0.05
 TEST_RATIO = 0.05
 
-# ======================================================
 
 
 def get_split(move_string):
 
-    # ------------------------------------------
-    # DETERMINISTIC HASH
-    # ------------------------------------------
 
     hash_value = hashlib.md5(
 
@@ -54,9 +47,6 @@ def get_split(move_string):
 
     ).hexdigest()
 
-    # ------------------------------------------
-    # CONVERT TO NUMBER
-    # ------------------------------------------
 
     numeric = int(
         hash_value,
@@ -67,7 +57,6 @@ def get_split(move_string):
         numeric % 10000
     ) / 10000
 
-    # ------------------------------------------
 
     if ratio < TRAIN_RATIO:
         return "train"
@@ -81,7 +70,6 @@ def get_split(move_string):
         return "test"
 
 
-# ======================================================
 
 counts = {
 
@@ -90,7 +78,6 @@ counts = {
     "test": 0
 }
 
-# ======================================================
 
 for jsonl_file in INPUT_DIR.glob("*.jsonl"):
 
@@ -122,7 +109,6 @@ for jsonl_file in INPUT_DIR.glob("*.jsonl"):
         encoding="utf-8"
     )
 
-    # ==================================================
 
     with open(
         jsonl_file,
@@ -141,7 +127,6 @@ for jsonl_file in INPUT_DIR.glob("*.jsonl"):
                 move_string
             )
 
-            # ------------------------------------------
 
             if split == "train":
 
@@ -157,13 +142,11 @@ for jsonl_file in INPUT_DIR.glob("*.jsonl"):
 
             counts[split] += 1
 
-    # ==================================================
 
     train_out.close()
     val_out.close()
     test_out.close()
 
-# ======================================================
 
 print("\n" + "=" * 60)
 print("FINAL SPLIT COUNTS")

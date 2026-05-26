@@ -1,9 +1,6 @@
 from pathlib import Path
 import json
 
-# ======================================================
-# INPUT / OUTPUT
-# ======================================================
 
 TRAIN_TRAJ_DIR = Path(
     "dataset/trajectories/train"
@@ -18,14 +15,10 @@ OUTPUT_DIR.mkdir(
     exist_ok=True
 )
 
-# ======================================================
 
 players = set()
 speeds = set()
 
-# ======================================================
-# SCAN TRAIN TRAJECTORIES ONLY
-# ======================================================
 
 for jsonl_file in TRAIN_TRAJ_DIR.glob("*.jsonl"):
 
@@ -48,9 +41,6 @@ for jsonl_file in TRAIN_TRAJ_DIR.glob("*.jsonl"):
                 record["speed"]
             )
 
-# ======================================================
-# BUILD PLAYER VOCAB
-# ======================================================
 
 player_vocab = {
 
@@ -63,9 +53,6 @@ for player in sorted(players):
         player_vocab
     )
 
-# ======================================================
-# BUILD SPEED VOCAB
-# ======================================================
 
 speed_vocab = {
 
@@ -78,9 +65,6 @@ for speed in sorted(speeds):
         speed_vocab
     )
 
-# ======================================================
-# SAVE PLAYER VOCAB
-# ======================================================
 
 with open(
     OUTPUT_DIR / "player_vocab.json",
@@ -94,9 +78,6 @@ with open(
         indent=2
     )
 
-# ======================================================
-# SAVE SPEED VOCAB
-# ======================================================
 
 with open(
     OUTPUT_DIR / "speed_vocab.json",
@@ -110,7 +91,6 @@ with open(
         indent=2
     )
 
-# ======================================================
 
 print("\n" + "=" * 60)
 print("VOCAB BUILD COMPLETE")

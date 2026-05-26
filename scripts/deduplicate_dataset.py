@@ -11,7 +11,6 @@ OUTPUT_DIR.mkdir(
     exist_ok=True
 )
 
-# ======================================================
 
 seen_hashes = set()
 
@@ -19,7 +18,6 @@ total_games = 0
 duplicate_games = 0
 kept_games = 0
 
-# ======================================================
 
 for jsonl_file in INPUT_DIR.glob("*.jsonl"):
     print("\n" + "=" * 60)
@@ -48,9 +46,6 @@ for jsonl_file in INPUT_DIR.glob("*.jsonl"):
 
             moves = record["moves"]
 
-            # ==========================================
-            # CREATE MOVE HASH
-            # ==========================================
 
             move_string = " ".join(moves)
 
@@ -58,9 +53,6 @@ for jsonl_file in INPUT_DIR.glob("*.jsonl"):
                 move_string.encode()
             ).hexdigest()
 
-            # ==========================================
-            # DUPLICATE CHECK
-            # ==========================================
 
             if game_hash in seen_hashes:
 
@@ -73,7 +65,6 @@ for jsonl_file in INPUT_DIR.glob("*.jsonl"):
 
             out_f.write(line)
 
-# ======================================================
 
 print("\n" + "=" * 60)
 print("DEDUPLICATION COMPLETE")
